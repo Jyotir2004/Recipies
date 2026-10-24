@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: recipis-api
+    runtime: python
+    plan: free
+    rootDir: core
+    buildCommand: pip install -r requirements.txt
+    startCommand: python manage.py migrate --noinput && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.8
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: DATABASE_URL
+        sync: false

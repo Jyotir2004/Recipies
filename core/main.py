@@ -29,23 +29,18 @@ app = FastAPI(
     title="Recipis API",
     description=(
         "Browse, view, and upload recipes. "
-        "Local API documentation: http://127.0.0.1:5000/docs. "
         "Run locally with `uvicorn main:app --reload --port 5000`."
     ),
     version="1.0.0",
     servers=[
         {
-            "url": "http://127.0.0.1:5000",
-            "description": "Local development API",
+            "url": os.environ.get("RENDER_EXTERNAL_URL", "http://127.0.0.1:5000"),
         }
     ],
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ],
+    allow_origins=settings.CORS_ALLOWED_ORIGINS,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
