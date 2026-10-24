@@ -1,0 +1,50 @@
+{% extends "vege/base.html" %}
+
+{% block title %}Your profile | Recipis{% endblock %}
+
+{% block extra_head %}
+<style>
+    .profile-card { max-width: 620px; margin: 24px auto; padding: 30px; border: 1px solid #eee0d3; border-radius: 14px; background: #fff; }
+    .profile-card h1, .profile-card h2 { font-family: Georgia, "Times New Roman", serif; }
+    .profile-field { margin: 18px 0; }
+    .profile-field label { display: block; margin-bottom: 7px; font-weight: 700; }
+    .profile-field input, .profile-field select { max-width: 100%; padding: 10px; border: 1px solid #d8c5a8; border-radius: 8px; font: inherit; }
+    .profile-button { padding: 11px 18px; border: 0; border-radius: 999px; background: #d97706; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+    .delete-account { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee0d3; }
+    .delete-account input { padding: 10px; border: 1px solid #d8c5a8; border-radius: 8px; }
+    .delete-account button { padding: 10px 14px; border: 0; border-radius: 8px; background: #b42318; color: white; cursor: pointer; }
+    .profile-errors { color: #b42318; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="profile-card">
+    <h1>Your profile</h1>
+    <p>{{ user.username }} · {{ user.email }}</p>
+    {% if user.profile.avatar_image %}
+        <img src="{{ user.profile.avatar_image.url }}" alt="Your profile picture" width="100" height="100" style="border-radius:50%; object-fit:cover;">
+    {% else %}
+        <p aria-label="Current avatar" style="font-size:3rem">{{ user.profile.avatar_emoji|default:"👩‍🍳" }}</p>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="profile-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<div class="profile-errors">{{ field.errors }}</div>{% endif %}
+            </div>
+        {% endfor %}
+        <button class="profile-button" type="submit">Save profile</button>
+    </form>
+    <div class="delete-account">
+        <h2>Delete your account</h2>
+        <p>This permanently removes your account, profile, and all your recipes.</p>
+        <form method="post" onsubmit="return confirm('Permanently delete your account and all your recipes?');">
+            {% csrf_token %}
+            <input type="password" name="password" autocomplete="current-password" placeholder="Confirm your password" required>
+            <button type="submit" name="delete_account" value="1">Delete account</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

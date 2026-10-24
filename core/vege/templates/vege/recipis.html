@@ -1,0 +1,628 @@
+{% extends "vege/base.html" %}
+
+{% block title %}Recipis | Find your next favorite{% endblock %}
+
+{% block extra_head %}
+    <style>
+        :root { color: #183553; background: #fff; }
+        body { background: #fff; }
+        .site-header { max-width: 1640px; }
+        .brand { color: #294762; }
+        .site-nav a { background: #f0f7fb; color: #294762; }
+        .site-nav a:hover, .site-nav a:focus-visible { background: #e2eef4; }
+        .page-container {
+            width: min(100%, 1640px);
+            max-width: none;
+            padding: 18px 32px 64px;
+        }
+        .recipe-browser {
+            display: grid;
+            grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
+            gap: 26px;
+            align-items: start;
+        }
+        .filter-panel {
+            position: sticky;
+            top: 20px;
+            padding: 28px 24px;
+            background: #f3f4f5;
+            color: #182f49;
+        }
+        .filter-panel h1 { margin: 0 0 8px; font-size: 1.6rem; }
+        .filter-intro { margin: 0 0 22px; color: #647488; line-height: 1.5; }
+        .filter-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 1.05rem;
+            line-height: 1.35;
+            cursor: pointer;
+        }
+        .filter-option input {
+            width: 20px;
+            height: 20px;
+            margin: 1px 0 0;
+            flex: 0 0 auto;
+            accent-color: #607f9d;
+        }
+        .filter-count { color: #8a98a7; font-size: .85rem; }
+        .filter-actions { display: flex; gap: 10px; margin-top: 34px; }
+        .filter-actions button {
+            min-width: 0;
+            flex: 1;
+            padding: 11px 8px;
+            border: 2px solid #a4b0bc;
+            background: #a4b0bc;
+            color: #fff;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .filter-actions button:hover { background: #71869a; border-color: #71869a; }
+        .recipes-content { min-width: 0; }
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        .recipes-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 0 0 20px;
+            color: #183553;
+        }
+        .recipes-heading h2 { margin: 0; font-size: 1.7rem; }
+        .recipe-search {
+            width: 100%;
+            margin: 0 0 20px;
+            padding: 12px 14px;
+            border: 1px solid #aebdca;
+            border-radius: 8px;
+            background: #fff;
+            color: #183553;
+            font: inherit;
+        }
+        .recipe-search:focus {
+            border-color: #607f9d;
+            outline: 3px solid rgba(96, 127, 157, .18);
+        }
+        .refresh-button {
+            border: 1px solid #aebdca;
+            padding: 9px 14px;
+            background: #fff;
+            color: #294762;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 600;
+        }
+        .refresh-button:hover { background: #edf4f8; }
+        .recipe-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 24px;
+        }
+        .recipe-card {
+            display: flex;
+            min-width: 0;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #e3ebf0;
+            border-radius: 13px;
+            background: #f0f7fb;
+        }
+        .recipe-card img, .recipe-placeholder {
+            display: block;
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+        }
+        .recipe-placeholder {
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #dcebf2, #c5dce7);
+            font-size: 4rem;
+        }
+        .recipe-card-content {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 20px;
+            color: #183553;
+        }
+        .recipe-type {
+            margin-bottom: 12px;
+            color: #405d78;
+            font-size: .82rem;
+            letter-spacing: .04em;
+        }
+        .recipe-card h3 { margin: 0 0 12px; font-size: 1.3rem; line-height: 1.25; }
+        .recipe-card p {
+            display: -webkit-box;
+            margin: 0 0 20px;
+            overflow: hidden;
+            color: #405a73;
+            line-height: 1.5;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 4;
+        }
+        .recipe-card button {
+            margin-top: auto;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: #294762;
+            cursor: pointer;
+            font: inherit;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .recipe-card button:hover { color: #0879ae; }
+        .recipe-card form { margin-top: 16px; }
+        .recipe-card .edit-button {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 8px 12px;
+            border: 1px solid #294762;
+            border-radius: 6px;
+            color: #294762;
+            text-decoration: none;
+        }
+        .recipe-card .edit-button:hover { background: #edf4f8; }
+        .recipe-card .delete-button {
+            margin: 0;
+            padding: 8px 12px;
+            border: 1px solid #b42318;
+            border-radius: 6px;
+            color: #b42318;
+            text-decoration: none;
+        }
+        .recipe-card .delete-button:hover { background: #fff0ef; }
+        .recipes-message { grid-column: 1 / -1; color: #405a73; }
+        .recipe-dialog {
+            width: min(560px, calc(100% - 32px));
+            max-height: 85vh;
+            padding: 24px;
+            overflow: auto;
+            border: 1px solid #d7e3ea;
+            border-radius: 16px;
+            background: #f5f9fb;
+            color: #183553;
+        }
+        .recipe-dialog::backdrop { background: rgba(24, 47, 73, .48); }
+        .recipe-dialog img {
+            display: block;
+            width: 100%;
+            max-height: 300px;
+            margin: 16px 0;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+        .recipe-dialog p { white-space: pre-wrap; line-height: 1.65; }
+        .dialog-close {
+            float: right;
+            border: 1px solid #aebdca;
+            padding: 8px 12px;
+            background: #fff;
+            color: #294762;
+            cursor: pointer;
+            font: inherit;
+        }
+        [hidden] { display: none !important; }
+        @media (max-width: 1100px) {
+            .recipe-browser { grid-template-columns: minmax(200px, 250px) minmax(0, 1fr); gap: 18px; }
+            .recipe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+        }
+        @media (max-width: 700px) {
+            .page-container { padding: 12px 16px 40px; }
+            .recipe-browser { grid-template-columns: 1fr; }
+            .filter-panel { position: static; padding: 20px; }
+            .filter-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
+            .filter-actions { margin-top: 18px; }
+            .recipe-grid { grid-template-columns: 1fr; }
+            .recipe-card img, .recipe-placeholder { height: 240px; }
+        }
+        @media (min-width: 701px) and (max-width: 850px) {
+            .recipe-grid { grid-template-columns: 1fr; }
+        }
+        :root { color: #29231f; background: #fffdfa; }
+        body { background: #fffdfa; }
+        .site-header { max-width: 1280px; }
+        .brand { color: #201b18; }
+        .site-nav a { background: transparent; color: #39332e; }
+        .site-nav a:hover, .site-nav a:focus-visible { background: transparent; color: #e65d36; }
+        .page-container { max-width: 1280px; padding: 30px 30px 64px; }
+        .recipe-browser { display: block; }
+        .filter-panel {
+            position: static;
+            padding: 6px 0 22px;
+            background: transparent;
+            color: #29231f;
+        }
+        .filter-panel h1 {
+            margin: 0 0 8px;
+            color: #29231f;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(2.2rem, 5vw, 3.6rem);
+            letter-spacing: -.045em;
+            line-height: 1.08;
+        }
+        .filter-intro { margin: 0 0 22px; color: #766d65; }
+        .filter-option {
+            align-items: center;
+            width: fit-content;
+            padding: 8px 14px;
+            border: 1px solid #eee6de;
+            border-radius: 999px;
+            background: #fff;
+            color: #524942;
+            font-size: .91rem;
+        }
+        .filter-option input {
+            width: 15px;
+            height: 15px;
+            accent-color: #e65d36;
+        }
+        .filter-options { display: flex; flex-wrap: wrap; gap: 8px; }
+        .filter-count { color: #a69a8e; }
+        .filter-actions { gap: 8px; margin-top: 14px; }
+        .filter-actions button {
+            flex: 0 0 auto;
+            padding: 8px 15px;
+            border: 1px solid #e65d36;
+            border-radius: 999px;
+            background: #e65d36;
+            color: #fff;
+            font-size: .86rem;
+        }
+        .filter-actions button:hover { border-color: #c84a28; background: #c84a28; }
+        .recipes-heading { margin: 22px 0 16px; color: #29231f; }
+        .recipes-heading h2 {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 1.9rem;
+            letter-spacing: -.025em;
+        }
+        .refresh-button {
+            border: 0;
+            border-radius: 999px;
+            padding: 11px 18px;
+            background: #e65d36;
+            color: #fff;
+            text-decoration: none;
+        }
+        .refresh-button:hover { background: #c84a28; }
+        .recipe-search {
+            margin-bottom: 24px;
+            padding: 15px 18px;
+            border: 1px solid #e8dfd6;
+            border-radius: 8px;
+            background: #fff;
+            color: #29231f;
+            box-shadow: 0 4px 16px rgba(57, 43, 31, .035);
+        }
+        .recipe-search::placeholder { color: #9a9087; }
+        .recipe-search:focus { border-color: #e65d36; outline-color: rgba(230, 93, 54, .17); }
+        .recipe-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px 24px; }
+        .recipe-card {
+            border: 0;
+            border-radius: 9px;
+            background: transparent;
+            box-shadow: none;
+            transition: transform .2s ease;
+        }
+        .recipe-card:hover { transform: translateY(-3px); }
+        .recipe-card img, .recipe-placeholder {
+            height: clamp(210px, 27vw, 330px);
+            border-radius: 8px;
+            background: linear-gradient(135deg, #f8e8d9, #f2cfb4);
+        }
+        .recipe-card-content { padding: 14px 2px 4px; color: #29231f; }
+        .recipe-type {
+            margin-bottom: 7px;
+            color: #e65d36;
+            font-size: .75rem;
+            font-weight: 700;
+            letter-spacing: .09em;
+            text-transform: uppercase;
+        }
+        .recipe-card h3 {
+            margin: 0 0 9px;
+            color: #29231f;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 1.35rem;
+            line-height: 1.22;
+        }
+        .recipe-card p { margin-bottom: 16px; color: #766d65; line-height: 1.55; }
+        .recipe-card button { color: #c84a28; }
+        .recipe-card button:hover { color: #96381f; }
+        .recipe-card .edit-button {
+            margin-top: 12px;
+            padding: 7px 12px;
+            border-color: #e8dfd6;
+            border-radius: 999px;
+            color: #5b5149;
+            font-size: .88rem;
+        }
+        .recipe-card .edit-button:hover { background: #f8f1ea; }
+        .recipe-card form { margin-top: 10px; }
+        .recipe-card .delete-button {
+            border-color: #e8c9c1;
+            border-radius: 999px;
+            color: #b44732;
+            font-size: .88rem;
+        }
+        .recipe-card .delete-button:hover { background: #fff2ef; }
+        .recipes-message {
+            padding: 30px;
+            border-radius: 8px;
+            background: #fff4ed;
+            color: #6d5142;
+            text-align: center;
+        }
+        .recipe-badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+        .recipe-badges span { display: inline-flex; align-items: center; padding: 5px 10px; border: 1px solid #eadccf; border-radius: 999px; background: #fff8f1; color: #51463f; font-size: .88rem; font-weight: 700; }
+        .recipe-badges .recipe-rank { border-color: #f0d3a8; background: #fff3dc; color: #77501b; }
+        .recipe-dialog .recipe-badges { margin: 12px 0; }
+        .recipe-dialog { border-color: #eee0d3; border-radius: 12px; background: #fffdfa; color: #29231f; }
+        .recipe-dialog::backdrop { background: rgba(35, 26, 19, .48); }
+        .dialog-close { border-color: #e8dfd6; border-radius: 999px; color: #51463f; }
+        .recipe-dialog h2 { font-family: Georgia, "Times New Roman", serif; }
+        .recipe-dialog .recipe-type { display: block; }
+        .recipe-promo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            margin-top: 58px;
+            padding: clamp(24px, 5vw, 48px);
+            border-radius: 8px;
+            background: #ffded1;
+        }
+        .recipe-promo h2 {
+            max-width: 480px;
+            margin: 0;
+            color: #29231f;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(1.6rem, 3vw, 2.25rem);
+            line-height: 1.2;
+        }
+        .recipe-promo p { margin: 8px 0 0; color: #76564a; }
+        @media (max-width: 700px) {
+            .page-container { padding: 24px 18px 44px; }
+            .filter-panel { padding-bottom: 12px; }
+            .recipe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; }
+            .recipe-card img, .recipe-placeholder { height: 220px; }
+            .recipe-promo { align-items: flex-start; flex-direction: column; }
+        }
+        @media (max-width: 480px) {
+            .recipes-heading { align-items: flex-start; flex-direction: column; }
+            .recipe-grid { grid-template-columns: 1fr; }
+            .recipe-card img, .recipe-placeholder { height: 260px; }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="recipe-browser">
+        <aside class="filter-panel" aria-labelledby="filter-title">
+            <h1 id="filter-title">Good food, made to be shared.</h1>
+            <p class="filter-intro">Find a new favorite, discover a seasonal idea, and bring something delicious to the table.</p>
+            <label class="filter-option" for="filter-all">
+                <input id="filter-all" type="checkbox" checked>
+                <span>Recipe <span class="filter-count" id="recipe-count">(0)</span></span>
+            </label>
+            <div class="filter-options" id="recipe-filters" aria-label="Recipe types">
+                {% for recipe_type, label in recipe_types %}
+                    <label class="filter-option" for="recipe-filter-{{ forloop.counter }}">
+                        <input id="recipe-filter-{{ forloop.counter }}" type="checkbox" value="{{ recipe_type }}" checked>
+                        <span>{{ label }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+            <div class="filter-actions">
+                <button id="apply-filters" type="button">Apply</button>
+            </div>
+        </aside>
+        <section class="recipes-content" aria-labelledby="recipes-title">
+            {% if notifications %}
+                <aside class="recipe-notifications" aria-label="Recipe notifications">
+                    {% for notification in notifications %}
+                        <p>⭐ Your recipe <a href="#recipe-{{ notification.recipe_id }}">{{ notification.recipe.recipe_name }}</a>
+                        received an admin star. ({{ notification.recipe.admin_stars }} ⭐)</p>
+                    {% endfor %}
+                </aside>
+            {% endif %}
+            <div class="recipes-heading">
+                <h2 id="recipes-title">Fresh from the kitchen</h2>
+                <a class="refresh-button" href="{% url 'upload_recipe' %}">Add a recipe</a>
+            </div>
+            <label for="recipe-search" class="visually-hidden">Search recipes by name or description</label>
+            <input
+                class="recipe-search"
+                id="recipe-search"
+                type="search"
+                placeholder="Search food by name or description..."
+                autocomplete="off"
+            >
+            <div class="recipe-grid" id="recipe-list" aria-live="polite">
+                {% for recipe in recipes %}
+                    <article
+                        class="recipe-card"
+                        id="recipe-{{ recipe.pk }}"
+                        data-recipe-type="{{ recipe.recipe_type }}"
+                        data-search="{{ recipe.recipe_name }} {{ recipe.get_recipe_type_display }} {{ recipe.recipe_description }}"
+                    >
+                        {% if recipe.recipe_image %}
+                            <img src="{{ recipe.recipe_image.url }}" alt="{{ recipe.recipe_name }}" loading="lazy">
+                        {% else %}
+                            <div class="recipe-placeholder" aria-hidden="true">🍲</div>
+                        {% endif %}
+                        <div class="recipe-card-content">
+                            <span class="recipe-type">{{ recipe.get_recipe_type_display }}</span>
+                            <h3>{{ recipe.recipe_name }}</h3>
+                            <p class="recipe-author">
+                                {% if recipe.user %}
+                                    {% if recipe.user.profile.avatar_image %}
+                                        <img src="{{ recipe.user.profile.avatar_image.url }}" alt="" class="author-avatar">
+                                    {% else %}
+                                        <span aria-hidden="true">{{ recipe.user.profile.avatar_emoji|default:"👩‍🍳" }}</span>
+                                    {% endif %}
+                                    {{ recipe.user.username }}
+                                {% else %}Community recipe{% endif %}
+                                </p>
+                                <div class="recipe-badges" aria-label="Recipe recognition">
+                                    <span class="recipe-rank">{{ recipe.get_rank_display }}</span>
+                                    {% if recipe.admin_stars %}<span aria-label="{{ recipe.admin_stars }} admin stars">⭐ {{ recipe.admin_stars }}</span>{% endif %}
+                                </div>
+                                <p>{{ recipe.recipe_description }}</p>
+                                <button type="button" class="more-info"
+                                    data-title="{{ recipe.recipe_name }}"
+                                    data-type="{{ recipe.get_recipe_type_display }}"
+                                    data-rank="{{ recipe.get_rank_display }}"
+                                    data-stars="{{ recipe.admin_stars }}"
+                                    data-description="{{ recipe.recipe_description }}"
+                                {% if recipe.recipe_image %}data-image="{{ recipe.recipe_image.url }}"{% endif %}>
+                                More info
+                            </button>
+                            {% if recipe.user_id == user.id %}
+                                <a class="edit-button" href="{% url 'update_recipe' recipe.pk %}">Edit recipe</a>
+                                <form method="post" action="{% url 'delete_recipe' recipe.pk %}">
+                                    {% csrf_token %}
+                                    <button class="delete-button" type="submit">Delete recipe</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% empty %}
+                    <p class="recipes-message">No recipes yet. Be the first to share one!</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+    <section class="recipe-promo" aria-label="Share a recipe">
+        <div>
+            <h2>Your kitchen has a story. Share a recipe.</h2>
+            <p>Add a favorite dish and inspire someone’s next meal.</p>
+        </div>
+        <a class="refresh-button" href="{% url 'upload_recipe' %}">Share your recipe</a>
+    </section>
+
+    <dialog class="recipe-dialog" id="recipe-dialog" aria-labelledby="dialog-title">
+        <button class="dialog-close" id="close-dialog" type="button" aria-label="Close recipe details">Close</button>
+        <h2 id="dialog-title">Recipe</h2>
+        <span class="recipe-type" id="dialog-type"></span>
+        <div class="recipe-badges" id="dialog-badges"></div>
+        <img id="dialog-image" alt="" hidden>
+        <p id="dialog-description"></p>
+    </dialog>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        (() => {
+            const recipeList = document.getElementById("recipe-list");
+            const recipeDialog = document.getElementById("recipe-dialog");
+            const dialogTitle = document.getElementById("dialog-title");
+            const dialogType = document.getElementById("dialog-type");
+            const dialogImage = document.getElementById("dialog-image");
+            const dialogBadges = document.getElementById("dialog-badges");
+            const dialogDescription = document.getElementById("dialog-description");
+            const filterList = document.getElementById("recipe-filters");
+            const allFilter = document.getElementById("filter-all");
+            const recipeCount = document.getElementById("recipe-count");
+            const searchInput = document.getElementById("recipe-search");
+            const cards = [...recipeList.querySelectorAll(".recipe-card")];
+            recipeCount.textContent = `(${cards.length})`;
+            const typeCounts = new Map();
+            cards.forEach((card) => {
+                const type = card.dataset.recipeType;
+                typeCounts.set(type, (typeCounts.get(type) || 0) + 1);
+            });
+            filterList.querySelectorAll("input").forEach((input) => {
+                const count = typeCounts.get(input.value) || 0;
+                const label = input.closest("label");
+                label.hidden = count === 0;
+                const countText = document.createElement("span");
+                countText.className = "filter-count";
+                countText.textContent = ` (${count})`;
+                label.lastElementChild.append(countText);
+            });
+            const applyFilters = () => {
+                const selectedTypes = new Set(
+                    [...filterList.querySelectorAll("input:checked")].map((input) => input.value)
+                );
+                const searchTerm = searchInput.value.trim().toLocaleLowerCase();
+                let visibleCount = 0;
+                cards.forEach((card) => {
+                    const matchesType = selectedTypes.has(card.dataset.recipeType);
+                    const matchesSearch = card.dataset.search.toLocaleLowerCase().includes(searchTerm);
+                    card.hidden = !matchesType || !matchesSearch;
+                    if (!card.hidden) visibleCount += 1;
+                });
+                allFilter.checked = [...filterList.querySelectorAll("input")].every((input) => input.checked);
+                const message = recipeList.querySelector(".recipes-message");
+                if (message && cards.length > 0) {
+                    message.hidden = visibleCount > 0;
+                    message.textContent = "No recipes match your search or filters.";
+                } else if (message) {
+                    message.hidden = false;
+                } else if (!message && visibleCount === 0) {
+                    const noResults = document.createElement("p");
+                    noResults.className = "recipes-message";
+                    noResults.textContent = "No recipes match your search or filters.";
+                    recipeList.append(noResults);
+                } else if (message) {
+                    message.hidden = true;
+                }
+            };
+
+            allFilter.addEventListener("change", () => {
+                filterList.querySelectorAll("input").forEach((checkbox) => {
+                    checkbox.checked = allFilter.checked;
+                });
+                applyFilters();
+            });
+            document.getElementById("apply-filters").addEventListener("click", () => {
+                applyFilters();
+            });
+            searchInput.addEventListener("input", applyFilters);
+            recipeList.addEventListener("click", (event) => {
+                const button = event.target.closest(".more-info");
+                if (!button) return;
+                dialogTitle.textContent = button.dataset.title;
+                dialogType.textContent = button.dataset.type;
+                dialogBadges.replaceChildren();
+                const rankBadge = document.createElement("span");
+                rankBadge.className = "recipe-rank";
+                rankBadge.textContent = button.dataset.rank;
+                dialogBadges.append(rankBadge);
+                if (Number(button.dataset.stars) > 0) {
+                    const starBadge = document.createElement("span");
+                    starBadge.textContent = `⭐ ${button.dataset.stars}`;
+                    dialogBadges.append(starBadge);
+                }
+                dialogDescription.textContent = button.dataset.description;
+                dialogImage.hidden = !button.dataset.image;
+                if (button.dataset.image) {
+                    dialogImage.src = button.dataset.image;
+                    dialogImage.alt = button.dataset.title;
+                }
+                recipeDialog.showModal();
+            });
+            document.getElementById("close-dialog").addEventListener("click", () => recipeDialog.close());
+            recipeDialog.addEventListener("click", (event) => {
+                if (event.target === recipeDialog) recipeDialog.close();
+            });
+            applyFilters();
+        })();
+    </script>
+{% endblock %}

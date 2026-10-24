@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Recipis{% endblock %}</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #29231f;
+            background: #fffdfa;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #fffdfa;
+        }
+
+        .site-header {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            gap: 18px;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 16px 30px 0;
+        }
+
+        .brand {
+            color: #201b18;
+            font-family: "Brush Script MT", "Segoe Script", cursive;
+            font-size: clamp(2.5rem, 5vw, 3.7rem);
+            font-style: italic;
+            font-weight: 700;
+            letter-spacing: -.06em;
+            line-height: 1.2;
+            text-decoration: none;
+        }
+
+        .site-nav {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+            gap: 8px 36px;
+            padding: 12px 0;
+            border-top: 1px solid #ded9d3;
+            border-bottom: 1px solid #ded9d3;
+        }
+
+        .site-nav a, .site-nav button {
+            padding: 4px 0;
+            border: 0;
+            background: transparent;
+            color: #39332e;
+            font-size: .92rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .site-nav a:hover, .site-nav a:focus-visible, .site-nav button:hover, .site-nav button:focus-visible {
+            color: #e65d36;
+            outline: 2px solid #e65d36;
+            outline-offset: 2px;
+        }
+
+        .site-messages { max-width: 1280px; margin: 18px auto 0; padding: 0 30px; }
+        .site-messages p { padding: 12px 16px; border-radius: 8px; background: #f5f0e9; }
+        .site-messages .error { background: #fff0ef; color: #9f251b; }
+        .page-container { max-width: 1280px; margin: 0 auto; padding: 34px 30px 64px; }
+
+        @media (max-width: 600px) {
+            .site-header { padding: 14px 18px 0; }
+            .site-nav { gap: 8px 20px; }
+            .page-container { padding: 28px 18px 48px; }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="{% url 'home' %}">RECIPIS</a>
+        <nav class="site-nav" aria-label="Main navigation">
+            {% if user.is_authenticated %}
+                <a href="{% url 'home' %}">Home</a>
+                <a href="{% url 'upload_recipe' %}">Share a recipe</a>
+                <a href="{% url 'profile' %}">Profile</a>
+                {% if user.is_staff %}<a href="{% url 'admin_dashboard' %}">Admin</a>{% endif %}
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}<button type="submit">Log out</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}">Log in</a>
+                <a href="{% url 'register' %}">Create account</a>
+                <a href="{% url 'admin_dashboard' %}">Admin</a>
+            {% endif %}
+        </nav>
+    </header>
+    {% if messages %}
+        <div class="site-messages" role="status">
+            {% for message in messages %}<p class="{{ message.tags }}">{{ message }}</p>{% endfor %}
+        </div>
+    {% endif %}
+    <main class="page-container">
+        {% block content %}{% endblock %}
+    </main>
+    <script>
+        window.RECIPIS_API_BASE = "{{ api_base_url|escapejs }}";
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

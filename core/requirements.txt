@@ -1,0 +1,6 @@
+Django
+Pillow
+fastapi
+httpx2
+python-multipart
+uvicorn

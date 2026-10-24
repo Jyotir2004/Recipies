@@ -1,0 +1,39 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Recipis frontend",
+			"type": "shell",
+			"command": ".\\venv\\Scripts\\python.exe",
+			"args": [
+				"core\\manage.py",
+				"runserver",
+				"127.0.0.1:8000"
+			],
+			"isBackground": true,
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "Run Recipis API backend",
+			"type": "shell",
+			"command": ".\\venv\\Scripts\\python.exe",
+			"args": [
+				"-m",
+				"uvicorn",
+				"main:app",
+				"--app-dir",
+				"core",
+				"--host",
+				"127.0.0.1",
+				"--port",
+				"5000"
+			],
+			"isBackground": true,
+			"problemMatcher": [
+				"$python"
+			]
+		}
+	]
+}
